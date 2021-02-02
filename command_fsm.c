@@ -5,42 +5,45 @@
 #include <string.h>
 #include <ctype.h>
 
-void fsm_init(fsm_context_t *ctx)
+fsm_res_e fsm_init(fsm_context_t *ctx)
 {
     ctx->idx = 0;
     memset(ctx->input, '\0', INPUT_LENGTH);
-    ctx->res = FSM_RES_CONTINUE;
     ctx->state = FSM_STATE_EXT_READ_COMMAND;
+    return FSM_RES_CONTINUE;
 }
 
-static void change_state_by_command(fsm_context_t *ctx)
+static fsm_res_e change_state_by_command(fsm_context_t *ctx)
 {
+    fsm_res_e res;
     if (strcmp(ctx->input, "puts") == 0)
     {
         ctx->state = FSM_STATE_EXT_PUTS_COMMAND;
-        ctx->res = FSM_RES_CONTINUE;
+        res = FSM_RES_CONTINUE;
     }
     else if (strcmp(ctx->input, "exit") == 0)
     {
         ctx->state = FSM_STATE_INT_EXIT;
-        ctx->res = FSM_RES_DO_INTERNAL;
+        res = FSM_RES_DO_INTERNAL;
     }
     else if (strcmp(ctx->input, "set") == 0)
     {
         ctx->state = FSM_STATE_EXT_SET_TYPE;
-        ctx->res = FSM_RES_CONTINUE;
+        res = FSM_RES_CONTINUE;
     }
     else
     {
         ctx->state = FSM_STATE_INT_WRONG_COMMAND;
-        ctx->res = FSM_RES_DO_INTERNAL;
+        res = FSM_RES_DO_INTERNAL;
     }
 
     memset(ctx->input, '\0', INPUT_LENGTH);
+    return res;
 }
 
-static void read_command(char ch, fsm_context_t *ctx)
+static fsm_res_e read_command(char ch, fsm_context_t *ctx)
 {
+    fsm_res_e res = FSM_RES_CONTINUE;
     if (isspace(ch) == 0)
     {
         ctx->input[ctx->idx++] = ch;
@@ -61,13 +64,16 @@ static void read_command(char ch, fsm_context_t *ctx)
     {
         printf("Read command: %s\n", ctx->input);
         ctx->idx = 0;
-        ctx->res = FSM_RES_DO_INTERNAL;
+        res = FSM_RES_DO_INTERNAL;
         ctx->state = FSM_STATE_INT_CHECK_COMMAND;
     }
+
+    return res;
 }
 
-static void read_string(char ch, fsm_context_t *ctx)
+static fsm_res_e read_string(char ch, fsm_context_t *ctx)
 {
+    fsm_res_e res = FSM_RES_CONTINUE;
     if (ch != '\n')
     {
         ctx->input[ctx->idx++] = ch;
@@ -78,13 +84,16 @@ static void read_string(char ch, fsm_context_t *ctx)
         //save string
         printf("Read string: %s\n", ctx->input);
         ctx->state = FSM_STATE_EXT_READ_COMMAND;
-        ctx->res = FSM_RES_CONTINUE;
+        res = FSM_RES_CONTINUE;
         memset(ctx->input, '\0', INPUT_LENGTH);
     }
+
+    return res;
 }
 
-static void set_type(char ch, fsm_context_t *ctx)
+static fsm_res_e set_type(char ch, fsm_context_t *ctx)
 {
+    fsm_res_e res = FSM_RES_CONTINUE;
     if (isspace(ch) == 0)
     {
         ctx->input[ctx->idx++] = ch;
@@ -96,13 +105,16 @@ static void set_type(char ch, fsm_context_t *ctx)
         //save set type
         printf("Read set type: %s\n", ctx->input);
         ctx->state = FSM_STATE_EXT_SET_NAME;
-        ctx->res = FSM_RES_CONTINUE;
+        res = FSM_RES_CONTINUE;
         memset(ctx->input, '\0', INPUT_LENGTH);
     }
+
+    return res;
 }
 
-static void set_name(char ch, fsm_context_t *ctx)
+static fsm_res_e set_name(char ch, fsm_context_t *ctx)
 {
+    fsm_res_e res = FSM_RES_CONTINUE;
     if (isspace(ch) == 0)
     {
         ctx->input[ctx->idx++] = ch;
@@ -113,13 +125,16 @@ static void set_name(char ch, fsm_context_t *ctx)
         //save set name
         printf("Read set name: %s\n", ctx->input);
         ctx->state = FSM_STATE_EXT_SET_VALUE;
-        ctx->res = FSM_RES_CONTINUE;
+        res = FSM_RES_CONTINUE;
         memset(ctx->input, '\0', INPUT_LENGTH);
     }
+
+    return res;
 }
 
-static void set_value(char ch, fsm_context_t *ctx)
+static fsm_res_e set_value(char ch, fsm_context_t *ctx)
 {
+    fsm_res_e res = FSM_RES_CONTINUE;
     if (isspace(ch) == 0)
     {
         ctx->input[ctx->idx++] = ch;
@@ -130,43 +145,46 @@ static void set_value(char ch, fsm_context_t *ctx)
         //save value for last name
         printf("Read set value: %s\n", ctx->input);
         ctx->state = FSM_STATE_EXT_READ_COMMAND;
-        ctx->res = FSM_RES_CONTINUE;
+        res = FSM_RES_CONTINUE;
         memset(ctx->input, '\0', INPUT_LENGTH);
     }
+
+    return res;
 }
 
-static void fsm_iter(char ch, fsm_context_t *ctx)
+static fsm_res_e fsm_iter(char ch, fsm_context_t *ctx)
 {
+    fsm_res_e res;
     switch(ctx->state)
     {
         case FSM_STATE_EXT_READ_COMMAND:
         {
-            read_command(ch, ctx);
+            res = read_command(ch, ctx);
             break;
         }
         case FSM_STATE_EXT_PUTS_COMMAND:
         {
-            read_string(ch, ctx);
+            res = read_string(ch, ctx);
             break;
         }
         case FSM_STATE_EXT_SET_TYPE:
         {
-            set_type(ch, ctx);
+            res = set_type(ch, ctx);
             break;
         }
         case FSM_STATE_EXT_SET_NAME:
         {
-            set_name(ch, ctx);
+            res = set_name(ch, ctx);
             break;
         }
         case FSM_STATE_EXT_SET_VALUE:
         {
-            set_value(ch, ctx);
+            res = set_value(ch, ctx);
             break;
         }
         case FSM_STATE_INT_CHECK_COMMAND:
         {
-            change_state_by_command(ctx);
+            res = change_state_by_command(ctx);
             break;
         }
         case FSM_STATE_INT_WRONG_COMMAND:
@@ -177,18 +195,23 @@ static void fsm_iter(char ch, fsm_context_t *ctx)
         }
         case FSM_STATE_INT_EXIT:
         {
-            ctx->res = FSM_RES_EXIT;
+            res = FSM_RES_EXIT;
             break;
         }
     }
+
+    return res;
 }
 
-void fsm(char ch, fsm_context_t *ctx)
+fsm_res_e fsm(char ch, fsm_context_t *ctx)
 {
+    fsm_res_e res;
     do
     {
-        fsm_iter(ch, ctx);
-    } while (ctx->res == FSM_RES_DO_INTERNAL);
+        res = fsm_iter(ch, ctx);
+    } while (res == FSM_RES_DO_INTERNAL);
+
+    return res;
 }
 
 /*

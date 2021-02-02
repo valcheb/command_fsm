@@ -24,12 +24,11 @@ typedef enum
 typedef struct
 {
     fsm_state_e state;
-    fsm_res_e   res;
     char        input[INPUT_LENGTH];
     int         idx;
 } fsm_context_t;
 
-void fsm_init(fsm_context_t *ctx);
-void fsm(char ch, fsm_context_t *ctx);
+fsm_res_e fsm_init(fsm_context_t *ctx);
+fsm_res_e fsm(char ch, fsm_context_t *ctx);
 
 #endif /*COMMAND_FSM_H_*/

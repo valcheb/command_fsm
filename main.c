@@ -7,12 +7,12 @@ int main()
     char input[] = "puts this is a test string\nset int a 10\nexit\n";
     int idx = 0;
     fsm_context_t context;
-    fsm_init(&context);
+    fsm_res_e res = fsm_init(&context);
 
     do
     {
-        fsm(input[idx++], &context);
-    } while (context.res == FSM_RES_CONTINUE);
+        res = fsm(input[idx++], &context);
+    } while (res == FSM_RES_CONTINUE);
 
     printf("Exit programm\n");
 
