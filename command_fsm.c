@@ -13,6 +13,12 @@ fsm_res_e fsm_init(fsm_context_t *ctx)
     return FSM_RES_CONTINUE;
 }
 
+static void clear_buffer(fsm_context_t *ctx)
+{
+    ctx->idx = 0;
+    memset(ctx->input, '\0', INPUT_LENGTH);
+}
+
 static fsm_res_e change_state_by_command(fsm_context_t *ctx)
 {
     fsm_res_e res;
@@ -37,7 +43,7 @@ static fsm_res_e change_state_by_command(fsm_context_t *ctx)
         res = FSM_RES_DO_INTERNAL;
     }
 
-    memset(ctx->input, '\0', INPUT_LENGTH);
+    clear_buffer(ctx);
     return res;
 }
 
@@ -63,7 +69,6 @@ static fsm_res_e read_command(char ch, fsm_context_t *ctx)
     else
     {
         printf("Read command: %s\n", ctx->input);
-        ctx->idx = 0;
         res = FSM_RES_DO_INTERNAL;
         ctx->state = FSM_STATE_INT_CHECK_COMMAND;
     }
@@ -80,12 +85,11 @@ static fsm_res_e read_string(char ch, fsm_context_t *ctx)
     }
     else
     {
-        ctx->idx = 0;
         //save string
         printf("Read string: %s\n", ctx->input);
         ctx->state = FSM_STATE_EXT_READ_COMMAND;
         res = FSM_RES_CONTINUE;
-        memset(ctx->input, '\0', INPUT_LENGTH);
+        clear_buffer(ctx);
     }
 
     return res;
@@ -100,13 +104,12 @@ static fsm_res_e set_type(char ch, fsm_context_t *ctx)
     }
     else
     {
-        ctx->idx = 0;
         //check correct type
         //save set type
         printf("Read set type: %s\n", ctx->input);
         ctx->state = FSM_STATE_EXT_SET_NAME;
         res = FSM_RES_CONTINUE;
-        memset(ctx->input, '\0', INPUT_LENGTH);
+        clear_buffer(ctx);
     }
 
     return res;
@@ -121,12 +124,11 @@ static fsm_res_e set_name(char ch, fsm_context_t *ctx)
     }
     else
     {
-        ctx->idx = 0;
         //save set name
         printf("Read set name: %s\n", ctx->input);
         ctx->state = FSM_STATE_EXT_SET_VALUE;
         res = FSM_RES_CONTINUE;
-        memset(ctx->input, '\0', INPUT_LENGTH);
+        clear_buffer(ctx);
     }
 
     return res;
@@ -141,12 +143,11 @@ static fsm_res_e set_value(char ch, fsm_context_t *ctx)
     }
     else
     {
-        ctx->idx = 0;
         //save value for last name
         printf("Read set value: %s\n", ctx->input);
         ctx->state = FSM_STATE_EXT_READ_COMMAND;
         res = FSM_RES_CONTINUE;
-        memset(ctx->input, '\0', INPUT_LENGTH);
+        clear_buffer(ctx);
     }
 
     return res;
