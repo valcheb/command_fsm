@@ -5,6 +5,13 @@
 #include <string.h>
 #include <ctype.h>
 
+#define NEXT_STATE(x, y) \
+do                       \
+{                        \
+    res = (x);           \
+    ctx->state = (y);    \
+} while (0)
+
 fsm_res_e fsm_init(fsm_context_t *ctx)
 {
     ctx->idx = 0;
@@ -69,8 +76,7 @@ static fsm_res_e read_command(char ch, fsm_context_t *ctx)
     else
     {
         printf("Read command: %s\n", ctx->input);
-        res = FSM_RES_DO_INTERNAL;
-        ctx->state = FSM_STATE_INT_CHECK_COMMAND;
+        NEXT_STATE(FSM_RES_DO_INTERNAL, FSM_STATE_INT_CHECK_COMMAND);
     }
 
     return res;
@@ -85,10 +91,8 @@ static fsm_res_e read_string(char ch, fsm_context_t *ctx)
     }
     else
     {
-        //save string
         printf("Read string: %s\n", ctx->input);
-        ctx->state = FSM_STATE_EXT_READ_COMMAND;
-        res = FSM_RES_CONTINUE;
+        NEXT_STATE(FSM_RES_CONTINUE, FSM_STATE_EXT_READ_COMMAND);
         clear_buffer(ctx);
     }
 
@@ -107,8 +111,7 @@ static fsm_res_e set_type(char ch, fsm_context_t *ctx)
         //check correct type
         //save set type
         printf("Read set type: %s\n", ctx->input);
-        ctx->state = FSM_STATE_EXT_SET_NAME;
-        res = FSM_RES_CONTINUE;
+        NEXT_STATE(FSM_RES_CONTINUE, FSM_STATE_EXT_SET_NAME);
         clear_buffer(ctx);
     }
 
@@ -126,8 +129,7 @@ static fsm_res_e set_name(char ch, fsm_context_t *ctx)
     {
         //save set name
         printf("Read set name: %s\n", ctx->input);
-        ctx->state = FSM_STATE_EXT_SET_VALUE;
-        res = FSM_RES_CONTINUE;
+        NEXT_STATE(FSM_RES_CONTINUE, FSM_STATE_EXT_SET_VALUE);
         clear_buffer(ctx);
     }
 
@@ -145,8 +147,7 @@ static fsm_res_e set_value(char ch, fsm_context_t *ctx)
     {
         //save value for last name
         printf("Read set value: %s\n", ctx->input);
-        ctx->state = FSM_STATE_EXT_READ_COMMAND;
-        res = FSM_RES_CONTINUE;
+        NEXT_STATE(FSM_RES_CONTINUE, FSM_STATE_EXT_READ_COMMAND);
         clear_buffer(ctx);
     }
 
