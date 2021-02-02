@@ -68,7 +68,7 @@ static void read_command(char ch, fsm_context_t *ctx)
 
 static void read_string(char ch, fsm_context_t *ctx)
 {
-    if (isspace(ch) == 0)
+    if (ch != '\n')
     {
         ctx->input[ctx->idx++] = ch;
     }

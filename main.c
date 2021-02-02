@@ -4,7 +4,7 @@
 
 int main()
 {
-    char input[] = "puts string\nset int a 10\nexit\n";
+    char input[] = "puts this is a test string\nset int a 10\nexit\n";
     int idx = 0;
     fsm_context_t context;
     fsm_init(&context);
