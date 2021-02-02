@@ -60,7 +60,6 @@ static void read_command(char ch, fsm_context_t *ctx)
     else
     {
         printf("Read command: %s\n", ctx->input);
-        ctx->input[ctx->idx] = '\0';
         ctx->idx = 0;
         ctx->res = FSM_RES_DO_INTERNAL;
         ctx->state = FSM_STATE_INT_CHECK_COMMAND;
@@ -75,7 +74,6 @@ static void read_string(char ch, fsm_context_t *ctx)
     }
     else
     {
-        ctx->input[ctx->idx] = '\0';
         ctx->idx = 0;
         //save string
         printf("Read string: %s\n", ctx->input);
@@ -93,7 +91,6 @@ static void set_type(char ch, fsm_context_t *ctx)
     }
     else
     {
-        ctx->input[ctx->idx] = '\0';
         ctx->idx = 0;
         //check correct type
         //save set type
@@ -112,7 +109,6 @@ static void set_name(char ch, fsm_context_t *ctx)
     }
     else
     {
-        ctx->input[ctx->idx] = '\0';
         ctx->idx = 0;
         //save set name
         printf("Read set name: %s\n", ctx->input);
@@ -130,7 +126,6 @@ static void set_value(char ch, fsm_context_t *ctx)
     }
     else
     {
-        ctx->input[ctx->idx] = '\0';
         ctx->idx = 0;
         //save value for last name
         printf("Read set value: %s\n", ctx->input);
