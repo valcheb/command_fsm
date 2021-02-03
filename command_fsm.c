@@ -31,23 +31,19 @@ static fsm_res_e change_state_by_command(fsm_context_t *ctx)
     fsm_res_e res;
     if (strcmp(ctx->input, "puts") == 0)
     {
-        ctx->state = FSM_STATE_EXT_PUTS_COMMAND;
-        res = FSM_RES_CONTINUE;
+        NEXT_STATE(FSM_RES_CONTINUE, FSM_STATE_EXT_PUTS_COMMAND);
     }
     else if (strcmp(ctx->input, "exit") == 0)
     {
-        ctx->state = FSM_STATE_INT_EXIT;
-        res = FSM_RES_DO_INTERNAL;
+        NEXT_STATE(FSM_RES_DO_INTERNAL, FSM_STATE_INT_EXIT);
     }
     else if (strcmp(ctx->input, "set") == 0)
     {
-        ctx->state = FSM_STATE_EXT_SET_TYPE;
-        res = FSM_RES_CONTINUE;
+        NEXT_STATE(FSM_RES_CONTINUE, FSM_STATE_EXT_SET_TYPE);
     }
     else
     {
-        ctx->state = FSM_STATE_INT_WRONG_COMMAND;
-        res = FSM_RES_DO_INTERNAL;
+        NEXT_STATE(FSM_RES_DO_INTERNAL, FSM_STATE_INT_WRONG_COMMAND);
     }
 
     clear_buffer(ctx);
