@@ -5,11 +5,11 @@
 #include <string.h>
 #include <ctype.h>
 
-#define NEXT_STATE(x, y) \
-do                       \
-{                        \
-    res = (x);           \
-    ctx->state = (y);    \
+#define NEXT_STATE(result, new_state) \
+do                                    \
+{                                     \
+    res = (result);                   \
+    ctx->state = (new_state);         \
 } while (0)
 
 fsm_res_e fsm_init(fsm_context_t *ctx)
