@@ -51,24 +51,29 @@ static fsm_res_e change_state_by_command(fsm_context_t *ctx)
     return res;
 }
 
+static fsm_res_e handl_input_char(char ch, fsm_context_t *ctx)
+{
+    fsm_res_e res = FSM_RES_CONTINUE;
+
+    if (ctx->idx < INPUT_LENGTH - 1)
+    {
+        ctx->input[ctx->idx++] = ch;
+    }
+    else
+    {
+        NEXT_STATE(FSM_RES_DO_INTERNAL, FSM_STATE_INT_ERROR);
+        ctx->error = FSM_ERROR_TOO_LONG_INPUT;
+    }
+
+    return res;
+}
+
 static fsm_res_e read_command(char ch, fsm_context_t *ctx)
 {
     fsm_res_e res = FSM_RES_CONTINUE;
     if (isspace(ch) == 0)
     {
-        ctx->input[ctx->idx++] = ch;
-        #if 0
-            if (ctx->idx < INPUT_LENGTH - 1)
-            {
-                ctx->input[ctx->idx++] = ch;
-            }
-            else
-            {
-                ctx->idx = 0;
-                ctx->res = FSM_RES_DO_INTERNAL;
-                ctx->state = FSM_STATE_INT_ERROR;
-            }
-        #endif
+        res = handl_input_char(ch, ctx);
     }
     else
     {
@@ -84,7 +89,7 @@ static fsm_res_e read_string(char ch, fsm_context_t *ctx)
     fsm_res_e res = FSM_RES_CONTINUE;
     if (ch != '\n')
     {
-        ctx->input[ctx->idx++] = ch;
+        res = handl_input_char(ch, ctx);
     }
     else
     {
@@ -101,7 +106,7 @@ static fsm_res_e set_type(char ch, fsm_context_t *ctx)
     fsm_res_e res = FSM_RES_CONTINUE;
     if (isspace(ch) == 0)
     {
-        ctx->input[ctx->idx++] = ch;
+        res = handl_input_char(ch, ctx);
     }
     else
     {
@@ -120,7 +125,7 @@ static fsm_res_e set_name(char ch, fsm_context_t *ctx)
     fsm_res_e res = FSM_RES_CONTINUE;
     if (isspace(ch) == 0)
     {
-        ctx->input[ctx->idx++] = ch;
+        res = handl_input_char(ch, ctx);
     }
     else
     {
@@ -138,7 +143,7 @@ static fsm_res_e set_value(char ch, fsm_context_t *ctx)
     fsm_res_e res = FSM_RES_CONTINUE;
     if (isspace(ch) == 0)
     {
-        ctx->input[ctx->idx++] = ch;
+        res = handl_input_char(ch, ctx);
     }
     else
     {
@@ -177,7 +182,8 @@ static fsm_res_e error_handler(fsm_context_t *ctx)
         case FSM_ERROR_TOO_LONG_INPUT:
         {
             printf("Too long input\n");
-            exit(1);
+            NEXT_STATE(FSM_RES_CONTINUE, FSM_STATE_EXT_SKIP);
+            clear_buffer(ctx);
             break;
         }
         case FSM_ERROR_WRONG_SET_TYPE:

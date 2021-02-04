@@ -31,7 +31,7 @@ typedef enum
     FSM_ERROR_WRONG_LOAD_FILENAME
 } fsm_error_e;
 
-#define INPUT_LENGTH 256
+#define INPUT_LENGTH 15
 typedef struct
 {
     fsm_state_e state;
