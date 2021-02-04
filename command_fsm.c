@@ -43,7 +43,8 @@ static fsm_res_e change_state_by_command(fsm_context_t *ctx)
     }
     else
     {
-        NEXT_STATE(FSM_RES_DO_INTERNAL, FSM_STATE_INT_WRONG_COMMAND);
+        NEXT_STATE(FSM_RES_DO_INTERNAL, FSM_STATE_INT_ERROR);
+        ctx->error = FSM_ERROR_WRONG_COMMAND;
     }
 
     clear_buffer(ctx);
@@ -65,7 +66,7 @@ static fsm_res_e read_command(char ch, fsm_context_t *ctx)
             {
                 ctx->idx = 0;
                 ctx->res = FSM_RES_DO_INTERNAL;
-                ctx->state = FSM_STATE_INT_WRONG_COMMAND;
+                ctx->state = FSM_STATE_INT_ERROR;
             }
         #endif
     }
@@ -150,6 +151,56 @@ static fsm_res_e set_value(char ch, fsm_context_t *ctx)
     return res;
 }
 
+static fsm_res_e input_skip(char ch, fsm_context_t *ctx)
+{
+    fsm_res_e res = FSM_RES_CONTINUE;
+    if (ch == '\n')
+    {
+        NEXT_STATE(FSM_RES_CONTINUE, FSM_STATE_EXT_READ_COMMAND);
+    }
+
+    return res;
+}
+
+static fsm_res_e error_handler(fsm_context_t *ctx)
+{
+    fsm_res_e res;
+    switch(ctx->error)
+    {
+        case FSM_ERROR_WRONG_COMMAND:
+        {
+            printf("Wrong command\n");
+            NEXT_STATE(FSM_RES_CONTINUE, FSM_STATE_EXT_SKIP);
+            clear_buffer(ctx);
+            break;
+        }
+        case FSM_ERROR_TOO_LONG_INPUT:
+        {
+            printf("Too long input\n");
+            exit(1);
+            break;
+        }
+        case FSM_ERROR_WRONG_SET_TYPE:
+        {
+            break;
+        }
+        case FSM_ERROR_INCORRECT_VALUE:
+        {
+            break;
+        }
+        case FSM_ERROR_WRONG_CALC_ARG:
+        {
+            break;
+        }
+        case FSM_ERROR_WRONG_LOAD_FILENAME:
+        {
+            break;
+        }
+    }
+
+    return res;
+}
+
 static fsm_res_e fsm_iter(char ch, fsm_context_t *ctx)
 {
     fsm_res_e res;
@@ -158,6 +209,11 @@ static fsm_res_e fsm_iter(char ch, fsm_context_t *ctx)
         case FSM_STATE_EXT_READ_COMMAND:
         {
             res = read_command(ch, ctx);
+            break;
+        }
+        case FSM_STATE_EXT_SKIP:
+        {
+            res = input_skip(ch, ctx);
             break;
         }
         case FSM_STATE_EXT_PUTS_COMMAND:
@@ -185,10 +241,9 @@ static fsm_res_e fsm_iter(char ch, fsm_context_t *ctx)
             res = change_state_by_command(ctx);
             break;
         }
-        case FSM_STATE_INT_WRONG_COMMAND:
+        case FSM_STATE_INT_ERROR:
         {
-            printf("Wrong command\n");
-            exit(1);
+            res = error_handler(ctx);
             break;
         }
         case FSM_STATE_INT_EXIT:

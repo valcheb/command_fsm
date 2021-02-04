@@ -11,19 +11,31 @@ typedef enum
 typedef enum
 {
     FSM_STATE_EXT_READ_COMMAND = 0,
+    FSM_STATE_EXT_SKIP,
     FSM_STATE_EXT_PUTS_COMMAND,
     FSM_STATE_EXT_SET_TYPE,
     FSM_STATE_EXT_SET_NAME,
     FSM_STATE_EXT_SET_VALUE,
     FSM_STATE_INT_EXIT,
     FSM_STATE_INT_CHECK_COMMAND,
-    FSM_STATE_INT_WRONG_COMMAND
+    FSM_STATE_INT_ERROR
 } fsm_state_e;
+
+typedef enum
+{
+    FSM_ERROR_WRONG_COMMAND = 0,
+    FSM_ERROR_TOO_LONG_INPUT,
+    FSM_ERROR_WRONG_SET_TYPE,
+    FSM_ERROR_INCORRECT_VALUE,
+    FSM_ERROR_WRONG_CALC_ARG,
+    FSM_ERROR_WRONG_LOAD_FILENAME
+} fsm_error_e;
 
 #define INPUT_LENGTH 256
 typedef struct
 {
     fsm_state_e state;
+    fsm_error_e error;
     char        input[INPUT_LENGTH];
     int         idx;
 } fsm_context_t;
