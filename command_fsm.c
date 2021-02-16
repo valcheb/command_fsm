@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdbool.h>
+#include <errno.h>
 
 static union_storage_t *storage;
 static us_elem_t temp_elem;
@@ -163,35 +165,90 @@ static fsm_res_e set_name(char ch, fsm_context_t *ctx)
     return res;
 }
 
+static bool is_input_int(char *input)
+{
+    for (int i = 0; i < strlen(input); i++)
+    {
+        if (isdigit(input[i]) == 0)
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+static bool is_input_number(char *input, us_type_e type)
+{
+    switch(type)
+    {
+        case US_TYPE_INT:
+        {
+            if (!is_input_int(input))
+            {
+                return false;
+            }
+            break;
+        }
+        case US_TYPE_DOUBLE:
+        {
+            char *end;
+            double temp_db = strtod(input, &end);
+            if (errno != 0 || *end != '\0')
+            {
+                return false;
+            }
+            break;
+        }
+        case US_TYPE_CLEAR:
+        {
+            break;
+        }
+    }
+
+    return true;
+}
+
+static void save_value_in_temp(char *input, us_elem_t *elem)
+{
+    switch(elem->value.type)
+    {
+        case US_TYPE_INT:
+        {
+            elem->value.un_data.int_m = atoi(input);
+            printf("Read set int value: %d\n", elem->value.un_data.int_m);
+            break;
+        }
+        case US_TYPE_DOUBLE:
+        {
+            elem->value.un_data.db_m = atof(input);
+            printf("Read set double value: %f\n", elem->value.un_data.db_m);
+            break;
+        }
+        case US_TYPE_CLEAR:
+        {
+            break;
+        }
+    }
+}
+
 static fsm_res_e set_value(char ch, fsm_context_t *ctx)
 {
     fsm_res_e res = FSM_RES_CONTINUE;
-    if (isspace(ch) == 0)
+    if (ch != '\n')
     {
         res = handl_input_char(ch, ctx);
     }
     else
     {
-        //TODO is input digit?
-        switch(temp_elem.value.type)
+        if (!is_input_number(ctx->input, temp_elem.value.type))
         {
-            case US_TYPE_INT:
-            {
-                temp_elem.value.un_data.int_m = atoi(ctx->input);
-                printf("Read set int value: %d\n", temp_elem.value.un_data.int_m);
-                break;
-            }
-            case US_TYPE_DOUBLE:
-            {
-                temp_elem.value.un_data.db_m = atof(ctx->input);
-                printf("Read set double value: %f\n", temp_elem.value.un_data.db_m);
-                break;
-            }
-            case US_TYPE_CLEAR:
-            {
-                break;
-            }
+            NEXT_STATE(FSM_RES_DO_INTERNAL, FSM_STATE_INT_ERROR);
+            ctx->error = FSM_ERROR_NOT_NUMBER;
+            return res;
         }
+
+        save_value_in_temp(ctx->input, &temp_elem);
 
         if (us_add(storage, temp_elem) == US_STORAGE_IS_FULL)
         {
@@ -262,8 +319,12 @@ static fsm_res_e error_handler(fsm_context_t *ctx)
             us_clear_element(&temp_elem);
             break;
         }
-        case FSM_ERROR_INCORRECT_VALUE:
+        case FSM_ERROR_NOT_NUMBER:
         {
+            printf("Set input is not a number\n");
+            NEXT_STATE(FSM_RES_CONTINUE, FSM_STATE_EXT_READ_COMMAND);
+            clear_buffer(ctx);
+            us_clear_element(&temp_elem);
             break;
         }
         case FSM_ERROR_WRONG_CALC_ARG:
