@@ -1,6 +1,8 @@
 #ifndef COMMAND_FSM_H_
 #define COMMAND_FSM_H_
 
+#include "union_storage.h"
+
 typedef enum
 {
     FSM_RES_CONTINUE = 0,
@@ -26,7 +28,9 @@ typedef enum
     FSM_ERROR_WRONG_COMMAND = 0,
     FSM_ERROR_TOO_LONG_INPUT,
     FSM_ERROR_WRONG_SET_TYPE,
+    FSM_ERROR_TOO_LONG_SET_NAME,
     FSM_ERROR_INCORRECT_VALUE,
+    FSM_ERROR_FULL_STORAGE,
     FSM_ERROR_WRONG_CALC_ARG,
     FSM_ERROR_WRONG_LOAD_FILENAME
 } fsm_error_e;
@@ -40,7 +44,7 @@ typedef struct
     int         idx;
 } fsm_context_t;
 
-fsm_res_e fsm_init(fsm_context_t *ctx);
+fsm_res_e fsm_init(fsm_context_t *ctx, union_storage_t *st);
 fsm_res_e fsm(char ch, fsm_context_t *ctx);
 
 #endif /*COMMAND_FSM_H_*/

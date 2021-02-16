@@ -5,6 +5,9 @@
 #include <string.h>
 #include <ctype.h>
 
+static union_storage_t *storage;
+static us_elem_t temp_elem;
+
 #define NEXT_STATE(result, new_state) \
 do                                    \
 {                                     \
@@ -12,8 +15,9 @@ do                                    \
     ctx->state = (new_state);         \
 } while (0)
 
-fsm_res_e fsm_init(fsm_context_t *ctx)
+fsm_res_e fsm_init(fsm_context_t *ctx, union_storage_t *st)
 {
+    storage = st;
     ctx->idx = 0;
     memset(ctx->input, '\0', INPUT_LENGTH);
     ctx->state = FSM_STATE_EXT_READ_COMMAND;
@@ -110,9 +114,22 @@ static fsm_res_e set_type(char ch, fsm_context_t *ctx)
     }
     else
     {
-        //check correct type
-        //save set type
         printf("Read set type: %s\n", ctx->input);
+        if (strcmp(ctx->input, "int") == 0)
+        {
+            temp_elem.value.type = US_TYPE_INT;
+        }
+        else if (strcmp(ctx->input, "double") == 0)
+        {
+            temp_elem.value.type = US_TYPE_DOUBLE;
+        }
+        else
+        {
+            NEXT_STATE(FSM_RES_DO_INTERNAL, FSM_STATE_INT_ERROR);
+            ctx->error = FSM_ERROR_WRONG_SET_TYPE;
+            return res;
+        }
+
         NEXT_STATE(FSM_RES_CONTINUE, FSM_STATE_EXT_SET_NAME);
         clear_buffer(ctx);
     }
@@ -129,8 +146,16 @@ static fsm_res_e set_name(char ch, fsm_context_t *ctx)
     }
     else
     {
-        //save set name
         printf("Read set name: %s\n", ctx->input);
+        //save set name
+        if (strlen(ctx->input) > NAME_LENGTH - 1)
+        {
+            NEXT_STATE(FSM_RES_DO_INTERNAL, FSM_STATE_INT_ERROR);
+            ctx->error = FSM_ERROR_TOO_LONG_SET_NAME;
+            return res;
+        }
+
+        strncpy(temp_elem.name, ctx->input, NAME_LENGTH);
         NEXT_STATE(FSM_RES_CONTINUE, FSM_STATE_EXT_SET_VALUE);
         clear_buffer(ctx);
     }
@@ -147,8 +172,35 @@ static fsm_res_e set_value(char ch, fsm_context_t *ctx)
     }
     else
     {
-        //save value for last name
-        printf("Read set value: %s\n", ctx->input);
+        //TODO is input digit?
+        switch(temp_elem.value.type)
+        {
+            case US_TYPE_INT:
+            {
+                temp_elem.value.un_data.int_m = atoi(ctx->input);
+                printf("Read set int value: %d\n", temp_elem.value.un_data.int_m);
+                break;
+            }
+            case US_TYPE_DOUBLE:
+            {
+                temp_elem.value.un_data.db_m = atof(ctx->input);
+                printf("Read set double value: %f\n", temp_elem.value.un_data.db_m);
+                break;
+            }
+            case US_TYPE_CLEAR:
+            {
+                break;
+            }
+        }
+
+        if (us_add(storage, temp_elem) == US_STORAGE_IS_FULL)
+        {
+            NEXT_STATE(FSM_RES_DO_INTERNAL, FSM_STATE_INT_ERROR);
+            ctx->error = FSM_ERROR_FULL_STORAGE;
+            return res;
+        }
+
+        us_clear_element(&temp_elem);
         NEXT_STATE(FSM_RES_CONTINUE, FSM_STATE_EXT_READ_COMMAND);
         clear_buffer(ctx);
     }
@@ -188,6 +240,26 @@ static fsm_res_e error_handler(fsm_context_t *ctx)
         }
         case FSM_ERROR_WRONG_SET_TYPE:
         {
+            printf("Incorrect type\n");
+            NEXT_STATE(FSM_RES_CONTINUE, FSM_STATE_EXT_SKIP);
+            clear_buffer(ctx);
+            us_clear_element(&temp_elem);
+            break;
+        }
+        case FSM_ERROR_TOO_LONG_SET_NAME:
+        {
+            printf("Too long variable name\n");
+            NEXT_STATE(FSM_RES_CONTINUE, FSM_STATE_EXT_SKIP);
+            clear_buffer(ctx);
+            us_clear_element(&temp_elem);
+            break;
+        }
+        case FSM_ERROR_FULL_STORAGE:
+        {
+            printf("Cant add element: storage is full\n");
+            NEXT_STATE(FSM_RES_CONTINUE, FSM_STATE_EXT_SKIP);
+            clear_buffer(ctx);
+            us_clear_element(&temp_elem);
             break;
         }
         case FSM_ERROR_INCORRECT_VALUE:
