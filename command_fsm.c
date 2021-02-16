@@ -276,55 +276,33 @@ static fsm_res_e input_skip(char ch, fsm_context_t *ctx)
     return res;
 }
 
+static char fsm_error_messages[FSM_ERROR_COUNT][FSM_ERROR_MESSAGE_LENGTH] =
+{
+    [FSM_ERROR_WRONG_COMMAND] = "Wrong command",
+    [FSM_ERROR_TOO_LONG_INPUT] = "Too long input",
+    [FSM_ERROR_WRONG_SET_TYPE] = "Incorrect type",
+    [FSM_ERROR_TOO_LONG_SET_NAME] = "Too long variable name",
+    [FSM_ERROR_NOT_NUMBER] = "Set input is not a number",
+    [FSM_ERROR_FULL_STORAGE] = "Cant add element: storage is full"
+};
+
 static fsm_res_e error_handler(fsm_context_t *ctx)
 {
     fsm_res_e res;
     switch(ctx->error)
     {
         case FSM_ERROR_WRONG_COMMAND:
-        {
-            printf("Wrong command\n");
-            NEXT_STATE(FSM_RES_CONTINUE, FSM_STATE_EXT_SKIP);
-            clear_buffer(ctx);
-            break;
-        }
         case FSM_ERROR_TOO_LONG_INPUT:
-        {
-            printf("Too long input\n");
-            NEXT_STATE(FSM_RES_CONTINUE, FSM_STATE_EXT_SKIP);
-            clear_buffer(ctx);
-            break;
-        }
         case FSM_ERROR_WRONG_SET_TYPE:
-        {
-            printf("Incorrect type\n");
-            NEXT_STATE(FSM_RES_CONTINUE, FSM_STATE_EXT_SKIP);
-            clear_buffer(ctx);
-            us_clear_element(&temp_elem);
-            break;
-        }
         case FSM_ERROR_TOO_LONG_SET_NAME:
-        {
-            printf("Too long variable name\n");
-            NEXT_STATE(FSM_RES_CONTINUE, FSM_STATE_EXT_SKIP);
-            clear_buffer(ctx);
-            us_clear_element(&temp_elem);
-            break;
-        }
         case FSM_ERROR_FULL_STORAGE:
         {
-            printf("Cant add element: storage is full\n");
             NEXT_STATE(FSM_RES_CONTINUE, FSM_STATE_EXT_SKIP);
-            clear_buffer(ctx);
-            us_clear_element(&temp_elem);
             break;
         }
         case FSM_ERROR_NOT_NUMBER:
         {
-            printf("Set input is not a number\n");
             NEXT_STATE(FSM_RES_CONTINUE, FSM_STATE_EXT_READ_COMMAND);
-            clear_buffer(ctx);
-            us_clear_element(&temp_elem);
             break;
         }
         case FSM_ERROR_WRONG_CALC_ARG:
@@ -335,7 +313,14 @@ static fsm_res_e error_handler(fsm_context_t *ctx)
         {
             break;
         }
+        case FSM_ERROR_COUNT:
+        {
+            break;
+        }
     }
+    printf("Error handler: %s\n", fsm_error_messages[ctx->error]);
+    clear_buffer(ctx);
+    us_clear_element(&temp_elem);
 
     return res;
 }

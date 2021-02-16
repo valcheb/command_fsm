@@ -23,6 +23,7 @@ typedef enum
     FSM_STATE_INT_ERROR
 } fsm_state_e;
 
+#define FSM_ERROR_MESSAGE_LENGTH 40
 typedef enum
 {
     FSM_ERROR_WRONG_COMMAND = 0,
@@ -32,7 +33,8 @@ typedef enum
     FSM_ERROR_NOT_NUMBER,
     FSM_ERROR_FULL_STORAGE,
     FSM_ERROR_WRONG_CALC_ARG,
-    FSM_ERROR_WRONG_LOAD_FILENAME
+    FSM_ERROR_WRONG_LOAD_FILENAME,
+    FSM_ERROR_COUNT
 } fsm_error_e;
 
 #define INPUT_LENGTH 15
