@@ -8,7 +8,6 @@
 typedef enum
 {
     US_RES_OK = 0,
-    US_RES_NOT_FOUND,
     US_STORAGE_IS_FULL
 } us_res_e;
 
@@ -46,7 +45,7 @@ typedef struct
 
 us_res_e us_init(union_storage_t *storage, us_elem_t *data, int size);
 us_res_e us_add(union_storage_t *storage, us_elem_t elem);
-us_res_e us_get_by_name(union_storage_t *storage, us_elem_t *elem, char *name);
+us_elem_t *us_get_by_name(union_storage_t *storage, char *name);
 us_res_e us_clear_element(us_elem_t *elem);
 
 #endif /*UNION_STORAGE_H_*/

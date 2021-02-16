@@ -23,25 +23,19 @@ us_res_e us_add(union_storage_t *storage, us_elem_t elem)
     return US_RES_OK;
 }
 
-us_res_e us_get_by_name(union_storage_t *storage, us_elem_t *elem, char *name)
+us_elem_t *us_get_by_name(union_storage_t *storage, char *name)
 {
-    int idx = 0;
-    us_res_e res = US_RES_NOT_FOUND;
-
-    while(idx < storage->size)
+    for (int idx = 0; idx < storage->size; idx++)
     {
         us_elem_t *de = &storage->data[idx];
 
         if (strncmp(de->name, name, NAME_LENGTH) == 0)
         {
-            *elem = *de;
-            res = US_RES_OK;
-            break;
+            return de;
         }
-        idx++;
     }
 
-    return res;
+    return NULL;
 }
 
 us_res_e us_clear_element(us_elem_t *elem)
