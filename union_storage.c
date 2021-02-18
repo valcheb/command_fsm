@@ -23,7 +23,7 @@ us_res_e us_add(union_storage_t *storage, us_elem_t elem)
     return US_RES_OK;
 }
 
-us_elem_t *us_get_by_name(union_storage_t *storage, char *name)
+us_elem_t *us_get_by_name(const union_storage_t *storage, const char *name)
 {
     for (int idx = 0; idx < storage->size; idx++)
     {

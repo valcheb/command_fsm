@@ -45,7 +45,7 @@ typedef struct
 
 us_res_e us_init(union_storage_t *storage, us_elem_t *data, int size);
 us_res_e us_add(union_storage_t *storage, us_elem_t elem);
-us_elem_t *us_get_by_name(union_storage_t *storage, char *name);
+us_elem_t *us_get_by_name(const union_storage_t *storage, const char *name);
 us_res_e us_clear_element(us_elem_t *elem);
 
 #endif /*UNION_STORAGE_H_*/
