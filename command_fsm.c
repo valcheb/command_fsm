@@ -165,7 +165,7 @@ static fsm_res_e set_name(char ch, fsm_context_t *ctx)
     return res;
 }
 
-static bool is_input_int(char *input)
+static bool is_input_int(const char *input)
 {
     for (int i = 0; i < strlen(input); i++)
     {
@@ -178,7 +178,7 @@ static bool is_input_int(char *input)
     return true;
 }
 
-static bool is_input_number(char *input, us_type_e type)
+static bool is_input_number(const char *input, us_type_e type)
 {
     switch(type)
     {
@@ -209,7 +209,7 @@ static bool is_input_number(char *input, us_type_e type)
     return true;
 }
 
-static void save_value_in_temp(char *input, us_elem_t *elem)
+static void save_value_in_temp(const char *input, us_elem_t *elem)
 {
     switch(elem->value.type)
     {
