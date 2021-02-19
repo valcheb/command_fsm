@@ -297,7 +297,14 @@ static fsm_res_e error_handler(fsm_context_t *ctx)
         case FSM_ERROR_TOO_LONG_SET_NAME:
         case FSM_ERROR_FULL_STORAGE:
         {
-            NEXT_STATE(FSM_RES_CONTINUE, FSM_STATE_EXT_SKIP);
+            if (ctx->input[strlen(ctx->input) - 1] == '\n')
+            {
+                NEXT_STATE(FSM_RES_CONTINUE, FSM_STATE_EXT_READ_COMMAND);
+            }
+            else
+            {
+                NEXT_STATE(FSM_RES_CONTINUE, FSM_STATE_EXT_SKIP);
+            }
             break;
         }
         case FSM_ERROR_NOT_NUMBER:
