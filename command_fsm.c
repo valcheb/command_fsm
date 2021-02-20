@@ -47,6 +47,11 @@ static fsm_res_e change_state_by_command(fsm_context_t *ctx)
     {
         NEXT_STATE(FSM_RES_CONTINUE, FSM_STATE_EXT_SET_TYPE);
     }
+    else if (strcmp(ctx->input, "sum") == 0 || strcmp(ctx->input, "mul") == 0)
+    {
+        NEXT_STATE(FSM_RES_DO_INTERNAL, FSM_STATE_INT_SAVE_OPER);
+        return res;
+    }
     else
     {
         NEXT_STATE(FSM_RES_DO_INTERNAL, FSM_STATE_INT_ERROR);
@@ -276,6 +281,112 @@ static fsm_res_e input_skip(char ch, fsm_context_t *ctx)
     return res;
 }
 
+static bool is_sum = true;
+#define ARGUMENTS_COUNT 2
+static us_elem_t *args[ARGUMENTS_COUNT];
+static fsm_res_e save_operation(fsm_context_t *ctx)
+{
+    fsm_res_e res;
+    if (strcmp(ctx->input, "sum") == 0)
+    {
+        is_sum = true;
+    }
+    else if (strcmp(ctx->input, "mul") == 0)
+    {
+        is_sum = false;
+    }
+
+    NEXT_STATE(FSM_RES_CONTINUE, FSM_STATE_EXT_READ_ARG);
+    clear_buffer(ctx);
+    return res;
+}
+
+static fsm_res_e read_argument(char ch, fsm_context_t *ctx)
+{
+    static uint8_t arg_count = 0;
+    fsm_res_e res = FSM_RES_CONTINUE;
+    if (isspace(ch) == 0)
+    {
+        res = handl_input_char(ch, ctx);
+    }
+    else
+    {
+        printf("Read argument %s\n", ctx->input);
+        if (strlen(ctx->input) >= NAME_LENGTH - 1)
+        {
+            if (ch == '\n')
+            {
+                strncat(ctx->input, "\n", 1);
+            }
+            ctx->error = FSM_ERROR_TOO_LONG_SET_NAME;
+            NEXT_STATE(FSM_RES_DO_INTERNAL, FSM_STATE_INT_ERROR);
+            return res;
+        }
+
+        args[arg_count] = us_get_by_name(storage, ctx->input);
+
+        if (args[arg_count] == NULL)
+        {
+            NEXT_STATE(FSM_RES_DO_INTERNAL, FSM_STATE_INT_ERROR);
+            ctx->error = FSM_ERROR_WRONG_CALC_ARG;
+            return res;
+        }
+
+        arg_count++;
+
+        if (arg_count == ARGUMENTS_COUNT)
+        {
+            if (is_sum)
+            {
+                if (args[0]->value.type == US_TYPE_INT && args[1]->value.type == US_TYPE_INT)
+                {
+                    printf("Result of sum: %d\n", args[0]->value.un_data.int_m + args[1]->value.un_data.int_m);
+                }
+                else if (args[0]->value.type == US_TYPE_DOUBLE && args[1]->value.type == US_TYPE_INT)
+                {
+                    printf("Result of sum: %f\n", args[0]->value.un_data.db_m + args[1]->value.un_data.int_m);
+                }
+                else if (args[0]->value.type == US_TYPE_INT && args[1]->value.type == US_TYPE_DOUBLE)
+                {
+                    printf("Result of sum: %f\n", args[0]->value.un_data.int_m + args[1]->value.un_data.db_m);
+                }
+                else
+                {
+                    printf("Result of sum: %f\n", args[0]->value.un_data.db_m + args[1]->value.un_data.db_m);
+                }
+            }
+            else
+            {
+                if (args[0]->value.type == US_TYPE_INT && args[1]->value.type == US_TYPE_INT)
+                {
+                    printf("Result of sum: %d\n", args[0]->value.un_data.int_m * args[1]->value.un_data.int_m);
+                }
+                else if (args[0]->value.type == US_TYPE_DOUBLE && args[1]->value.type == US_TYPE_INT)
+                {
+                    printf("Result of sum: %f\n", args[0]->value.un_data.db_m * args[1]->value.un_data.int_m);
+                }
+                else if (args[0]->value.type == US_TYPE_INT && args[1]->value.type == US_TYPE_DOUBLE)
+                {
+                    printf("Result of sum: %f\n", args[0]->value.un_data.int_m * args[1]->value.un_data.db_m);
+                }
+                else
+                {
+                    printf("Result of sum: %f\n", args[0]->value.un_data.db_m * args[1]->value.un_data.db_m);
+                }
+            }
+            arg_count = 0;
+            NEXT_STATE(FSM_RES_CONTINUE, FSM_STATE_EXT_READ_COMMAND);
+        }
+        else
+        {
+            NEXT_STATE(FSM_RES_CONTINUE, FSM_STATE_EXT_READ_ARG);
+        }
+        clear_buffer(ctx);
+    }
+
+    return res;
+}
+
 static char fsm_error_messages[FSM_ERROR_COUNT][FSM_ERROR_MESSAGE_LENGTH] =
 {
     [FSM_ERROR_WRONG_COMMAND] = "Wrong command",
@@ -283,7 +394,8 @@ static char fsm_error_messages[FSM_ERROR_COUNT][FSM_ERROR_MESSAGE_LENGTH] =
     [FSM_ERROR_WRONG_SET_TYPE] = "Incorrect type",
     [FSM_ERROR_TOO_LONG_SET_NAME] = "Too long variable name",
     [FSM_ERROR_NOT_NUMBER] = "Set input is not a number",
-    [FSM_ERROR_FULL_STORAGE] = "Cant add element: storage is full"
+    [FSM_ERROR_FULL_STORAGE] = "Cant add element: storage is full",
+    [FSM_ERROR_WRONG_CALC_ARG] = "Argument not found in storage",
 };
 
 static fsm_res_e error_handler(fsm_context_t *ctx)
@@ -296,6 +408,7 @@ static fsm_res_e error_handler(fsm_context_t *ctx)
         case FSM_ERROR_WRONG_SET_TYPE:
         case FSM_ERROR_TOO_LONG_SET_NAME:
         case FSM_ERROR_FULL_STORAGE:
+        case FSM_ERROR_WRONG_CALC_ARG:
         {
             if (ctx->input[strlen(ctx->input) - 1] == '\n')
             {
@@ -310,10 +423,6 @@ static fsm_res_e error_handler(fsm_context_t *ctx)
         case FSM_ERROR_NOT_NUMBER:
         {
             NEXT_STATE(FSM_RES_CONTINUE, FSM_STATE_EXT_READ_COMMAND);
-            break;
-        }
-        case FSM_ERROR_WRONG_CALC_ARG:
-        {
             break;
         }
         case FSM_ERROR_WRONG_LOAD_FILENAME:
@@ -367,9 +476,19 @@ static fsm_res_e fsm_iter(char ch, fsm_context_t *ctx)
             res = set_value(ch, ctx);
             break;
         }
+        case FSM_STATE_EXT_READ_ARG:
+        {
+            res = read_argument(ch, ctx);
+            break;
+        }
         case FSM_STATE_INT_CHECK_COMMAND:
         {
             res = change_state_by_command(ctx);
+            break;
+        }
+        case FSM_STATE_INT_SAVE_OPER:
+        {
+            res = save_operation(ctx);
             break;
         }
         case FSM_STATE_INT_ERROR:
