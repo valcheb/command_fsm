@@ -8,6 +8,10 @@
 int main()
 {
     char input[] =
+    "set double a 0.5\n"
+    "set int b 3\n"
+    "sum a b\n"
+    "sum unnknown b\n"
     "set int test_long_name 5\n"
     "set_very_long_input_you_see int test 77\n"
     "set int ts_int 77\n"
