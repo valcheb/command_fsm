@@ -327,6 +327,10 @@ static fsm_res_e read_argument(char ch, fsm_context_t *ctx)
 
         if (args[arg_count] == NULL)
         {
+            if (ch == '\n')
+            {
+                strncat(ctx->input, "\n", 1);
+            }
             NEXT_STATE(FSM_RES_DO_INTERNAL, FSM_STATE_INT_ERROR);
             ctx->error = FSM_ERROR_WRONG_CALC_ARG;
             return res;
